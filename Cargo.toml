@@ -1,0 +1,10 @@
+[package]
+name = "rust_ray_tracer_in_one_weekend"
+version = "0.1.0"
+authors = ["Jesse Welnick <jesse.welnick@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+try_from_integers = { path = "./src/try_from_integers" }
