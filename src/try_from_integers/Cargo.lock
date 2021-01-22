@@ -19,13 +19,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rust_ray_tracer_in_one_weekend"
-version = "0.1.0"
-dependencies = [
- "try_from_integers",
-]
-
-[[package]]
 name = "syn"
 version = "1.0.58"
 source = "registry+https://github.com/rust-lang/crates.io-index"
