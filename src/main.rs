@@ -5,10 +5,25 @@ mod ray;
 mod vec3;
 
 use ray::Ray;
-use std::usize;
+use std::{borrow::Cow, usize};
 use vec3::Vec3;
 
+fn is_sphere_hit(center: &Vec3, radius: f32, ray: &Ray) -> bool {
+  let center_offset = match *ray.origin() {
+    Cow::Borrowed(origin) => origin - center,
+    Cow::Owned(origin) => origin - center,
+  };
+  let a = ray.direction().dot(ray.direction());
+  let b = 2.0 * center_offset.dot(ray.direction());
+  let c = center_offset.dot(&center_offset) - radius * radius;
+  let discriminant = b * b - 4.0 * a * c;
+  discriminant > 0.0
+}
+
 fn color(ray: &Ray) -> Vec3 {
+  if is_sphere_hit(&Vec3::new(0.0, 0.0, -1.0), 0.5, ray) {
+    return Vec3::new(1.0, 0.0, 0.0);
+  }
   let unit_direction = ray.direction().unit_vector();
   let lerp_factor = 0.5 * (unit_direction.y() + 1.0);
   (1.0 - lerp_factor) as f32 * Vec3::new(1.0, 1.0, 1.0) + lerp_factor as f32 * Vec3::new(0.5, 0.7, 1.0)
