@@ -1,11 +1,13 @@
 #![deny(clippy::perf, clippy::correctness, clippy::complexity, clippy::style, missing_debug_implementations)]
 #![warn(clippy::pedantic)]
 
+mod camera;
 mod hit;
 mod ray;
 mod sphere;
 mod vec3;
 
+use camera::Camera;
 use hit::{Hittable, HittableList};
 use ray::Ray;
 use sphere::Sphere;
@@ -38,20 +40,22 @@ fn color(ray: &Ray, world: &HittableList) -> Vec3 {
 fn main() {
   let number_of_x_pixels = 200;
   let number_of_y_pixels = 100;
+  let number_of_samples_per_pixel = 100;
   println!("P3\n{} {}\n255", number_of_x_pixels, number_of_y_pixels);
-  let lower_left_corner = Vec3::new(-2.0, -1.0, -1.0);
-  let horizontal = Vec3::new(4.0, 0.0, 0.0);
-  let vertical = Vec3::new(0.0, 2.0, 0.0);
-  let origin = Vec3::new(0.0, 0.0, 0.0);
   let mut world = HittableList::new();
   world.list_mut().push(Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.0).into(), 0.5)));
   world.list_mut().push(Box::new(Sphere::new(Vec3::new(0.0, -100.5, -1.0).into(), 100.0)));
+  let camera = Camera::default();
   (0..number_of_y_pixels).rev().for_each(|current_y_pixel| {
     (0..number_of_x_pixels).for_each(|current_x_pixel| {
-      let u = current_x_pixel as f32 / number_of_x_pixels as f32;
-      let v = current_y_pixel as f32 / number_of_y_pixels as f32;
-      let ray = Ray::new((&origin).into(), (lower_left_corner + u * horizontal + v * vertical).into());
-      let pixel_color = color(&ray, &world);
+      let mut pixel_color = Vec3::new(0.0, 0.0, 0.0);
+      (0..number_of_samples_per_pixel).for_each(|_| {
+        let u = (current_x_pixel as f32 + fastrand::f32()) / number_of_x_pixels as f32;
+        let v = (current_y_pixel as f32 + fastrand::f32()) / number_of_y_pixels as f32;
+        let ray = camera.get_ray(u, v);
+        pixel_color += color(&ray, &world);
+      });
+      pixel_color /= number_of_samples_per_pixel as f32;
       let red_value = (255.99 * pixel_color.r()) as usize;
       let green_value = (255.99 * pixel_color.g()) as usize;
       let blue_value = (255.99 * pixel_color.b()) as usize;
