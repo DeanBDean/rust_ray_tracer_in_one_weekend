@@ -2,27 +2,33 @@
 #![warn(clippy::pedantic)]
 
 use crate::hit::{HitRecord, Hittable};
+use crate::material::Material;
 use crate::ray::Ray;
 use crate::vec3::Vec3;
 use itertools::FoldWhile::{Continue, Done};
 use itertools::Itertools;
 use std::borrow::Cow;
+use std::sync::Arc;
 
 pub struct Sphere<'a> {
   center: Cow<'a, Vec3>,
+  material: Arc<dyn Material>,
   radius: f32,
 }
 
 #[allow(dead_code)]
 impl<'a> Sphere<'a> {
-  pub fn new(center: Cow<'a, Vec3>, radius: f32) -> Self {
-    Self { center, radius }
+  pub fn new(center: Cow<'a, Vec3>, radius: f32, material: Arc<dyn Material>) -> Self {
+    Self { center, radius, material }
   }
   pub fn center(&self) -> &Cow<'a, Vec3> {
     &self.center
   }
   pub fn radius(&self) -> f32 {
     self.radius
+  }
+  pub fn material(&self) -> Arc<dyn Material> {
+    self.material.clone()
   }
 }
 
@@ -41,7 +47,12 @@ impl<'a> Hittable for Sphere<'a> {
           if *scalar_length < scalar_from_ray_origin_max && *scalar_length > scalar_from_ray_origin_min {
             let point_at_parameter = ray.point_at_parameter(*scalar_length);
             let normal = (point_at_parameter - *(*self.center())) / self.radius;
-            Done(Some(HitRecord::new(*scalar_length, point_at_parameter.into(), normal.into())))
+            Done(Some(HitRecord::new(
+              *scalar_length,
+              point_at_parameter.into(),
+              normal.into(),
+              self.material(),
+            )))
           } else {
             Continue(None)
           }

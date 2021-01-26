@@ -1,25 +1,29 @@
 #![deny(clippy::perf, clippy::correctness, clippy::complexity, clippy::style, missing_debug_implementations)]
 #![warn(clippy::pedantic)]
 
+use crate::material::Material;
 use crate::ray::Ray;
 use crate::vec3::Vec3;
 use std::borrow::Cow;
+use std::sync::Arc;
 
 #[allow(clippy::module_name_repetitions)]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct HitRecord<'a, 'b> {
   scalar_from_ray_origin: f32,
   point: Cow<'a, Vec3>,
   normal: Cow<'b, Vec3>,
+  material: Arc<dyn Material>,
 }
 
 #[allow(dead_code)]
 impl<'a, 'b> HitRecord<'a, 'b> {
-  pub fn new(scalar_from_ray_origin: f32, point: Cow<'a, Vec3>, normal: Cow<'b, Vec3>) -> Self {
+  pub fn new(scalar_from_ray_origin: f32, point: Cow<'a, Vec3>, normal: Cow<'b, Vec3>, material: Arc<dyn Material>) -> Self {
     Self {
       scalar_from_ray_origin,
       point,
       normal,
+      material,
     }
   }
   pub fn scalar_from_ray_origin(&self) -> f32 {
@@ -30,6 +34,9 @@ impl<'a, 'b> HitRecord<'a, 'b> {
   }
   pub fn normal(&self) -> &Cow<'b, Vec3> {
     &self.normal
+  }
+  pub fn material(&self) -> Arc<dyn Material> {
+    self.material.clone()
   }
 }
 
