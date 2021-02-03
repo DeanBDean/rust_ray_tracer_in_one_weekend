@@ -35,6 +35,87 @@ fn color(ray: &Ray, world: &HittableList, depth: u8) -> Vec3 {
   )
 }
 
+fn create_random_scene() -> HittableList {
+  let mut random_array = HittableList::new();
+  random_array.list_mut().push(
+    Box::new(
+      Sphere::new(
+        Vec3::new(0.0, -1000.0, 0.0).into(),
+        1000.0,
+        Arc::new(Lambertian::new(Vec3::new(0.5, 0.5, 0.5).into())),
+      )
+    )
+  );
+  (-11..11).for_each(|a| {
+    (-11..11).for_each(|b| {
+      let choose_mat = fastrand::f32();
+      #[allow(clippy::cast_precision_loss)]
+      let center = Vec3::new(a as f32 + 0.9 * fastrand::f32(), 0.2, b as f32 + 0.9 * fastrand::f32());
+      if (center - Vec3::new(4.0, 0.2, 2.0)).length() > 0.9 {
+        if choose_mat < 0.8 {
+          random_array.list_mut().push(
+            Box::new(
+              Sphere::new(
+                center.into(),
+                0.2,
+                Arc::new(Lambertian::new(Vec3::new(fastrand::f32()*fastrand::f32(), fastrand::f32() * fastrand::f32(), fastrand::f32() * fastrand::f32()).into()))
+              )
+            )
+          );
+        } else if choose_mat < 0.95 {
+          random_array.list_mut().push(
+            Box::new(
+              Sphere::new(
+                center.into(),
+                0.2,
+                Arc::new(Metal::new(Vec3::new(0.5 * (1.0 + fastrand::f32()), 0.5 * (1.0 + fastrand::f32()), 0.5 * (1.0 + fastrand::f32())).into(), 0.5 * fastrand::f32()))
+              )
+            )
+          )
+        } else {
+          random_array.list_mut().push(
+            Box::new(
+              Sphere::new(
+                center.into(),
+                0.2,
+                Arc::new(Dielectric::new(1.5))
+              )
+            )
+          )
+        }
+      }
+    })
+  });
+  random_array.list_mut().push(
+    Box::new(
+      Sphere::new(
+        Vec3::new(0.0, 1.0, 0.0).into(),
+        1.0,
+        Arc::new(Dielectric::new(1.5))
+      )
+    )
+  );
+  random_array.list_mut().push(
+    Box::new(
+      Sphere::new(
+        Vec3::new(-4.0, 1.0, 0.0).into(),
+        1.0,
+        Arc::new(Lambertian::new(Vec3::new(0.4, 0.2, 0.1).into()))
+      )
+    )
+  );
+  random_array.list_mut().push(
+    Box::new(
+      Sphere::new(
+        Vec3::new(4.0, 1.0, 0.0).into(),
+        1.0,
+        Arc::new(Metal::new(Vec3::new(0.7, 0.6, 0.5).into(), 0.0))
+      )
+    )
+  );
+  random_array
+}
+
 #[allow(
   clippy::similar_names,
   clippy::cast_possible_truncation,
@@ -46,36 +127,11 @@ fn main() {
   let number_of_y_pixels = 100;
   let number_of_samples_per_pixel = 100;
   println!("P3\n{} {}\n255", number_of_x_pixels, number_of_y_pixels);
-  let mut world = HittableList::new();
-  world.list_mut().push(Box::new(Sphere::new(
-    Vec3::new(0.0, 0.0, -1.0).into(),
-    0.5,
-    Arc::new(Lambertian::new(Vec3::new(0.1, 0.2, 0.5).into())),
-  )));
-  world.list_mut().push(Box::new(Sphere::new(
-    Vec3::new(0.0, -100.5, -1.0).into(),
-    100.0,
-    Arc::new(Lambertian::new(Vec3::new(0.8, 0.8, 0.0).into())),
-  )));
-  world.list_mut().push(Box::new(Sphere::new(
-    Vec3::new(1.0, 0.0, -1.0).into(),
-    0.5,
-    Arc::new(Metal::new(Vec3::new(0.8, 0.6, 0.2).into(), 0.5)),
-  )));
-  world.list_mut().push(Box::new(Sphere::new(
-    Vec3::new(-1.0, 0.0, -1.0).into(),
-    0.5,
-    Arc::new(Dielectric::new(1.5)),
-  )));
-  world.list_mut().push(Box::new(Sphere::new(
-    Vec3::new(-1.0, 0.0, -1.0).into(),
-    -0.45,
-    Arc::new(Dielectric::new(1.5)),
-  )));
-  let look_from = Vec3::new(3.0, 3.0, 2.0);
-  let look_at = Vec3::new(0.0, 0.0, -1.0);
-  let distance_to_focus = (look_from - look_at).length();
-  let aperature = 2.0;
+  let world = create_random_scene();
+  let look_from = Vec3::new(13.0, 2.0, 3.0);
+  let look_at = Vec3::new(0.0, 0.0, 0.0);
+  let distance_to_focus = 10.0;
+  let aperature = 0.1;
   let camera = Camera::new_from_fov_and_aspect(
     &look_from,
     &look_at,
