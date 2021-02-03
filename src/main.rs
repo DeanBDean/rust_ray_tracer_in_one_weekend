@@ -72,12 +72,18 @@ fn main() {
     -0.45,
     Arc::new(Dielectric::new(1.5)),
   )));
+  let look_from = Vec3::new(3.0, 3.0, 2.0);
+  let look_at = Vec3::new(0.0, 0.0, -1.0);
+  let distance_to_focus = (look_from - look_at).length();
+  let aperature = 2.0;
   let camera = Camera::new_from_fov_and_aspect(
-    &Vec3::new(-2.0, 2.0, 1.0),
-    &Vec3::new(0.0, 0.0, -1.0),
+    &look_from,
+    &look_at,
     &Vec3::new(0.0, 1.0, 0.0),
-    90.0,
-    number_of_x_pixels as f32 / number_of_y_pixels as f32
+    20.0,
+    number_of_x_pixels as f32 / number_of_y_pixels as f32,
+    aperature,
+    distance_to_focus,
   );
   (0..number_of_y_pixels).rev().for_each(|current_y_pixel| {
     (0..number_of_x_pixels).for_each(|current_x_pixel| {
