@@ -65,16 +65,29 @@ use sphere::Sphere;
 use std::usize;
 use vec3::Vec3;
 
+fn random_in_unit_sphere() -> Vec3 {
+  let point_in_unit_sphere;
+  loop {
+    let potential_point_in_unit_sphere = 2.0 * Vec3::new(fastrand::f32(), fastrand::f32(), fastrand::f32()) - Vec3::new(1.0, 1.0, 1.0);
+    if potential_point_in_unit_sphere.squared_length() < 1.0 {
+      point_in_unit_sphere = potential_point_in_unit_sphere;
+      break;
+    }
+  }
+  point_in_unit_sphere
+}
+
 fn color(ray: &Ray, world: &HittableList) -> Vec3 {
-  world.is_hit(ray, 0.0, f32::MAX).map_or_else(
+  world.is_hit(ray, 0.001, f32::MAX).map_or_else(
     || {
       let unit_direction = ray.direction().unit_vector();
       let lerp_factor = 0.5 * (unit_direction.y() + 1.0);
       (1.0 - lerp_factor) as f32 * Vec3::new(1.0, 1.0, 1.0) + lerp_factor as f32 * Vec3::new(0.5, 0.7, 1.0)
     },
     |hit_record| {
-      let normal = hit_record.normal();
-      0.5 * Vec3::new(normal.x() + 1.0, normal.y() + 1.0, normal.z() + 1.0)
+      let target = hit_record.point() + hit_record.normal() + random_in_unit_sphere();
+      let new_ray = Ray::new(hit_record.point(), &(target - hit_record.point()));
+      0.5 * color(&new_ray, world)
     },
   )
 }
@@ -104,6 +117,7 @@ fn main() {
         pixel_color += color(&ray, &world);
       });
       pixel_color /= number_of_samples_per_pixel as f32;
+      pixel_color = Vec3::new(pixel_color.x().sqrt(), pixel_color.y().sqrt(), pixel_color.z().sqrt());
       let red_value = (255.99 * pixel_color.r()) as usize;
       let green_value = (255.99 * pixel_color.g()) as usize;
       let blue_value = (255.99 * pixel_color.b()) as usize;
