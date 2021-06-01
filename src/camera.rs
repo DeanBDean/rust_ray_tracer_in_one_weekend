@@ -1,5 +1,6 @@
 use crate::ray::Ray;
 use crate::vec3::Vec3;
+use std::f32::consts::PI;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Camera {
@@ -18,6 +19,24 @@ impl Camera {
       lower_left_corner: *lower_left_corner,
     }
   }
+  pub fn new_from_fov_and_aspect(look_from: &Vec3, look_at: &Vec3, vup: &Vec3, vertical_fov: f32, aspect: f32) -> Self {
+    let theta = vertical_fov * (PI / 180.0);
+    let half_height = (theta / 2.0).tan();
+    let half_width = aspect * half_height;
+    let origin = look_from;
+    let w = (look_from - look_at).unit_vector();
+    let u = vup.cross(&w).unit_vector();
+    let v = w.cross(&u);
+    let lower_left_corner = origin - half_width * u - half_height * v - w;
+    let horizontal = 2.0 * half_width * u;
+    let vertical = 2.0 * half_height * v;
+    Self {
+      origin: *origin,
+      horizontal,
+      vertical,
+      lower_left_corner,
+    }
+  }
   pub fn default() -> Self {
     Self {
       origin: Vec3::new(0.0, 0.0, 0.0),
@@ -26,7 +45,11 @@ impl Camera {
       vertical: Vec3::new(0.0, 2.0, 0.0),
     }
   }
-  pub fn get_ray(&self, u: f32, v: f32) -> Ray {
-    Ray::new(&self.origin, &(self.lower_left_corner + u * self.horizontal + v * self.vertical))
+
+  pub fn get_ray(&self, s: f32, t: f32) -> Ray {
+    Ray::new(
+      &self.origin,
+      &(self.lower_left_corner + s * self.horizontal + t * self.vertical - self.origin),
+    )
   }
 }
