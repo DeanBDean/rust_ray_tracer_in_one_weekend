@@ -99,3 +99,60 @@ impl Material for Metal {
     }
   }
 }
+
+fn refract(v: &Vec3, n: &Vec3, ni_over_nt: f32) -> Option<Vec3> {
+  let unit_vector = v.unit_vector();
+  let dt = unit_vector.dot(n);
+  let discriminant = 1.0 - ni_over_nt * ni_over_nt * (1.0 - dt * dt);
+  if discriminant > 0.0 {
+    Some(ni_over_nt * (unit_vector - n * dt) - n * discriminant.sqrt())
+  } else {
+    None
+  }
+}
+
+fn schlick(cosine: f32, ref_idx: f32) -> f32 {
+  let r0 = (1.0 - ref_idx) / (1.0 + ref_idx);
+  let r0 = r0 * r0;
+  r0 + (1.0 - r0) * (1.0 - cosine).powf(5.0)
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Dielectric {
+  ref_idx: f32,
+}
+
+impl Dielectric {
+  pub fn new(ref_idx: f32) -> Self {
+    Self { ref_idx }
+  }
+}
+
+impl Material for Dielectric {
+  fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> Option<ScatterResult> {
+    let reflected = reflect(ray_in.direction(), hit_record.normal());
+    let attenuation = Vec3::new(1.0, 1.0, 1.0);
+    let (outward_normal, ni_over_nt, cosine) = if ray_in.direction().dot(hit_record.normal()) > 0.0 {
+      let cosine = self.ref_idx * ray_in.direction().dot(hit_record.normal()) / ray_in.direction().length();
+      (-*hit_record.normal(), self.ref_idx, cosine)
+    } else {
+      let cosine = -ray_in.direction().dot(hit_record.normal()) / ray_in.direction().length();
+      (*hit_record.normal(), 1.0 / self.ref_idx, cosine)
+    };
+    let refraction_result = refract(ray_in.direction(), &outward_normal, ni_over_nt);
+    let reflect_probability = if refraction_result.is_some() {
+      schlick(cosine, self.ref_idx)
+    } else {
+      1.0
+    };
+    let scattered = if fastrand::f32() < reflect_probability {
+      Ray::new(hit_record.point(), &reflected)
+    } else {
+      refraction_result.map_or_else(
+        || unreachable!("Refraction not possible"),
+        |refracted| Ray::new(hit_record.point(), &refracted),
+      )
+    };
+    Some(ScatterResult::new(attenuation, scattered))
+  }
+}

@@ -61,7 +61,7 @@ mod vec3;
 
 use camera::Camera;
 use hit::{Hittable, HittableList};
-use material::{Lambertian, Metal};
+use material::{Dielectric, Lambertian, Metal};
 use ray::Ray;
 use sphere::Sphere;
 use std::sync::Arc;
@@ -101,7 +101,7 @@ fn main() {
   world.list_mut().push(Box::new(Sphere::new(
     &Vec3::new(0.0, 0.0, -1.0),
     0.5,
-    Arc::new(Lambertian::new(&Vec3::new(0.8, 0.3, 0.3))),
+    Arc::new(Lambertian::new(&Vec3::new(0.1, 0.2, 0.5))),
   )));
   world.list_mut().push(Box::new(Sphere::new(
     &Vec3::new(0.0, -100.5, -1.0),
@@ -111,13 +111,14 @@ fn main() {
   world.list_mut().push(Box::new(Sphere::new(
     &Vec3::new(1.0, 0.0, -1.0),
     0.5,
-    Arc::new(Metal::new(&Vec3::new(0.8, 0.6, 0.2), 0.3)),
+    Arc::new(Metal::new(&Vec3::new(0.8, 0.6, 0.2), 0.5)),
   )));
-  world.list_mut().push(Box::new(Sphere::new(
-    &Vec3::new(-1.0, 0.0, -1.0),
-    0.5,
-    Arc::new(Metal::new(&Vec3::new(0.8, 0.8, 0.8), 1.0)),
-  )));
+  world
+    .list_mut()
+    .push(Box::new(Sphere::new(&Vec3::new(-1.0, 0.0, -1.0), 0.5, Arc::new(Dielectric::new(1.5)))));
+  world
+    .list_mut()
+    .push(Box::new(Sphere::new(&Vec3::new(-1.0, 0.0, -1.0), -0.45, Arc::new(Dielectric::new(1.5)))));
   let camera = Camera::default();
   (0..number_of_y_pixels).rev().for_each(|current_y_pixel| {
     (0..number_of_x_pixels).for_each(|current_x_pixel| {
