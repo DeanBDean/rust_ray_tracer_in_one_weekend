@@ -40,7 +40,6 @@
   clippy::unnested_or_patterns,
   clippy::unused_self,
   clippy::verbose_file_reads,
-  clippy::cargo,
   clippy::correctness,
   clippy::complexity,
   clippy::perf,
@@ -52,32 +51,49 @@
 )]
 #![warn(clippy::pedantic)]
 
-mod vec3;
+#[allow(unused_extern_crates)]
+extern crate proc_macro;
 
-use std::usize;
-use vec3::Vec3;
+use proc_macro::TokenStream;
+use quote::quote;
+use syn::{parse_macro_input, DeriveInput};
 
-#[allow(
-  clippy::cast_possible_truncation,
-  clippy::cast_precision_loss,
-  clippy::cast_sign_loss,
-  clippy::similar_names
-)]
-fn main() {
-  let number_of_x_pixels = 200;
-  let number_of_y_pixels = 100;
-  println!("P3\n{} {}\n255", number_of_x_pixels, number_of_y_pixels);
-  (0..number_of_y_pixels).rev().for_each(|current_y_pixel| {
-    (0..number_of_x_pixels).for_each(|current_x_pixel| {
-      let pixel_color = Vec3::new(
-        current_x_pixel as f32 / number_of_x_pixels as f32,
-        current_y_pixel as f32 / number_of_y_pixels as f32,
-        0.2,
+#[proc_macro_derive(TryFromIntegers)]
+pub fn derive_try_from_impls(enum_or_struct: TokenStream) -> TokenStream {
+  let DeriveInput { ident, .. } = parse_macro_input!(enum_or_struct);
+  let integer_types = [
+    quote!(u8),
+    quote!(u16),
+    quote!(u32),
+    quote!(u64),
+    quote!(u128),
+    quote!(usize),
+    quote!(i8),
+    quote!(i16),
+    quote!(i32),
+    quote!(i64),
+    quote!(i128),
+    quote!(isize),
+  ];
+
+  integer_types
+    .iter()
+    .fold(TokenStream::new(), |mut total_tokenstream, current_integer_type| {
+      let new_try_from = quote!(
+        impl TryFrom<#current_integer_type> for #ident {
+          type Error = Error;
+
+          fn try_from(value: #current_integer_type) -> Result<Self, Self::Error> {
+            match value {
+              0 => Ok(Self::Zero),
+              1 => Ok(Self::One),
+              2 => Ok(Self::Two),
+              _ => Err("Vec3Index must be 0, 1 or 2".into()),
+            }
+          }
+        }
       );
-      let red_value = (255.99 * pixel_color.r()) as usize;
-      let green_value = (255.99 * pixel_color.g()) as usize;
-      let blue_value = (255.99 * pixel_color.b()) as usize;
-      println!("{} {} {}", red_value, green_value, blue_value);
+      total_tokenstream.extend(TokenStream::from(new_try_from));
+      total_tokenstream
     })
-  })
 }

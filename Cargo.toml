@@ -12,3 +12,4 @@ categories = ["ray tracing", "graphics"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+try_from_integers = { path = "./src/try_from_integers" }
