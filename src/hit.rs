@@ -1,20 +1,24 @@
+use crate::material::Material;
 use crate::ray::Ray;
 use crate::vec3::Vec3;
+use std::sync::Arc;
 
 #[allow(clippy::module_name_repetitions)]
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct HitRecord {
   scalar_from_ray_origin: f32,
   point: Vec3,
   normal: Vec3,
+  material: Arc<dyn Material>,
 }
 
 impl HitRecord {
-  pub fn new(scalar_from_ray_origin: f32, point: &Vec3, normal: &Vec3) -> Self {
+  pub fn new(scalar_from_ray_origin: f32, point: &Vec3, normal: &Vec3, material: Arc<dyn Material>) -> Self {
     Self {
       scalar_from_ray_origin,
       point: *point,
       normal: *normal,
+      material,
     }
   }
   pub fn scalar_from_ray_origin(&self) -> f32 {
@@ -25,6 +29,9 @@ impl HitRecord {
   }
   pub fn normal(&self) -> &Vec3 {
     &self.normal
+  }
+  pub fn material(&self) -> Arc<dyn Material> {
+    self.material.clone()
   }
 }
 
